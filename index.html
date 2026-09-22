@@ -4,13 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#c9002b" />
-  <meta name="description" content="이름 입력 또는 자필 사인 업로드로 투명 배경 서명 이미지를 만드는 Sign Studio" />
+  <meta name="description" content="이름 입력, 직접 그리기, 자필 서명 업로드로 투명 배경 서명 이미지를 만드는 Sign Studio" />
   <title>Sign Studio · 투명 서명 만들기</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Manrope:wght@600;700;800&family=Nanum+Pen+Script&family=Single+Day&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=20260922-2" />
 </head>
 <body>
   <header class="topbar">
@@ -29,10 +29,10 @@
       <div class="hero-copy">
         <p class="eyebrow">SIGNATURE MAKER</p>
         <h1>
-          <span class="line">이름 하나로,</span>
+          <span class="line">쓰고, 그리고,</span>
           <span class="line"><em>바로 쓰는 사인</em>을 만듭니다.</span>
         </h1>
-        <p>이름을 입력하거나 자필 사인을 올리면 3가지 스타일로 정리합니다. 마음에 드는 결과를 선택해 배경 없는 PNG로 저장하세요.</p>
+        <p>이름을 입력하거나 화면에 직접 사인하세요. 기존 자필 사인 이미지도 깔끔하게 정리해 배경 없는 PNG로 저장할 수 있습니다.</p>
       </div>
       <div class="hero-mark" aria-hidden="true">
         <svg viewBox="0 0 340 150">
@@ -48,17 +48,21 @@
         <div class="panel-head">
           <p class="eyebrow">MAKE YOUR SIGN</p>
           <h2>어떻게 만들까요?</h2>
-          <p>두 방식 모두 현재 브라우저에서만 처리됩니다.</p>
+          <p>세 가지 방식 모두 현재 브라우저 안에서 처리됩니다.</p>
         </div>
 
         <div class="mode-tabs" role="tablist" aria-label="서명 입력 방식">
           <button class="mode-tab active" id="textTab" type="button" role="tab" aria-selected="true" aria-controls="textPanel" data-mode="text">
-            <span>이름으로 만들기</span>
-            <small>텍스트 입력</small>
+            <span>이름으로</span>
+            <small>사인 · 인장</small>
+          </button>
+          <button class="mode-tab" id="drawTab" type="button" role="tab" aria-selected="false" aria-controls="drawPanel" data-mode="draw">
+            <span>직접 그리기</span>
+            <small>마우스 · 터치</small>
           </button>
           <button class="mode-tab" id="uploadTab" type="button" role="tab" aria-selected="false" aria-controls="uploadPanel" data-mode="upload">
-            <span>사인 업로드</span>
-            <small>이미지 정리</small>
+            <span>이미지 업로드</span>
+            <small>배경 정리</small>
           </button>
         </div>
 
@@ -67,17 +71,42 @@
             <span>이름 또는 표기할 문구</span>
             <div class="text-entry">
               <input id="nameInput" type="text" maxlength="14" autocomplete="off" value="김홍섭" placeholder="예: 김홍섭" />
-              <button class="button primary" id="generateTextBtn" type="button">3안 만들기</button>
+              <button class="button primary" id="generateTextBtn" type="button">2안 만들기</button>
             </div>
           </label>
 
+          <div class="text-result-guide">
+            <div><b>01</b><span><strong>사인형</strong><small>자연스러운 친필 느낌</small></span></div>
+            <div><b>02</b><span><strong>인장형</strong><small>이름 끝에 印 자동 추가</small></span></div>
+          </div>
+
           <div class="tip-card">
-            <span class="tip-icon">✦</span>
+            <span class="tip-icon">印</span>
             <div>
-              <strong>한글·영문 모두 가능합니다</strong>
-              <p>짧은 이름일수록 인장과 사인 형태가 더 또렷하게 만들어집니다.</p>
+              <strong>인장에는 ‘印’이 자동으로 들어갑니다</strong>
+              <p>예: 김홍섭 → 김홍섭印. 3글자 이름은 4칸 인장 구성이 자연스럽게 완성됩니다.</p>
             </div>
           </div>
+        </section>
+
+        <section class="mode-panel" id="drawPanel" role="tabpanel" aria-labelledby="drawTab" hidden>
+          <div class="draw-head">
+            <div>
+              <strong>빈 공간에 사인해 주세요</strong>
+              <small>마우스, 터치, 스타일러스 펜을 모두 사용할 수 있습니다.</small>
+            </div>
+            <span class="draw-live"><i></i> 직접 입력</span>
+          </div>
+          <div class="draw-paper checker">
+            <canvas id="drawCanvas" width="1200" height="520" aria-label="직접 사인을 그리는 캔버스"></canvas>
+            <span class="draw-hint" id="drawHint">여기에 사인하세요</span>
+          </div>
+          <div class="draw-tools">
+            <button class="button ghost" id="undoDrawBtn" type="button">↶ 한 단계 취소</button>
+            <button class="button ghost" id="clearDrawBtn" type="button">전체 지우기</button>
+            <button class="button primary" id="applyDrawBtn" type="button">사인으로 만들기</button>
+          </div>
+          <p class="draw-help">그린 선만 남겨 투명 이미지로 만듭니다. 결과에서는 원본·선명·레드 3가지로 비교할 수 있습니다.</p>
         </section>
 
         <section class="mode-panel" id="uploadPanel" role="tabpanel" aria-labelledby="uploadTab" hidden>
@@ -108,7 +137,7 @@
 
         <div class="privacy-note">
           <strong>개인정보 보호</strong>
-          <p>입력한 이름과 업로드 이미지는 서버로 전송하지 않습니다. 생성과 다운로드가 모두 브라우저 안에서 처리됩니다.</p>
+          <p>이름, 직접 그린 사인, 업로드 이미지는 서버로 전송하지 않습니다. 생성과 다운로드가 모두 브라우저 안에서 처리됩니다.</p>
         </div>
       </aside>
 
@@ -116,7 +145,7 @@
         <div class="result-head">
           <div>
             <p class="eyebrow">CHOOSE ONE</p>
-            <h2>마음에 드는 사인을 고르세요</h2>
+            <h2>마음에 드는 결과를 고르세요</h2>
           </div>
           <button class="button soft" id="regenerateBtn" type="button">다시 만들기</button>
         </div>
@@ -124,22 +153,22 @@
         <div class="result-grid" id="resultGrid">
           <button class="sign-card selected" type="button" data-index="0" aria-pressed="true">
             <div class="sign-stage checker"><canvas width="1200" height="600"></canvas></div>
-            <div class="sign-meta"><span><b>01</b><strong>인장형</strong></span><i>선택됨</i></div>
+            <div class="sign-meta"><span><b>01</b><strong>사인형</strong></span><i>선택됨</i></div>
           </button>
           <button class="sign-card" type="button" data-index="1" aria-pressed="false">
             <div class="sign-stage checker"><canvas width="1200" height="600"></canvas></div>
-            <div class="sign-meta"><span><b>02</b><strong>유려한 사인</strong></span><i>선택</i></div>
+            <div class="sign-meta"><span><b>02</b><strong>인장형</strong></span><i>선택</i></div>
           </button>
           <button class="sign-card" type="button" data-index="2" aria-pressed="false">
             <div class="sign-stage checker"><canvas width="1200" height="600"></canvas></div>
-            <div class="sign-meta"><span><b>03</b><strong>빠른 필기형</strong></span><i>선택</i></div>
+            <div class="sign-meta"><span><b>03</b><strong>레드 잉크</strong></span><i>선택</i></div>
           </button>
         </div>
 
         <div class="download-bar">
           <div>
             <span class="download-badge">PNG</span>
-            <p><strong id="selectedLabel">인장형</strong><small>투명 배경 · 자동 여백 정리</small></p>
+            <p><strong id="selectedLabel">사인형</strong><small>투명 배경 · 자동 여백 정리</small></p>
           </div>
           <div class="download-actions">
             <button class="button ghost" id="copyBtn" type="button">이미지 복사</button>
@@ -155,14 +184,14 @@
         <h2>만들고, 고르고, 저장합니다.</h2>
       </div>
       <ol>
-        <li><span>1</span><div><strong>입력</strong><p>이름을 입력하거나 자필 사인을 업로드합니다.</p></div></li>
-        <li><span>2</span><div><strong>선택</strong><p>자동 생성된 3가지 스타일을 비교합니다.</p></div></li>
-        <li><span>3</span><div><strong>저장</strong><p>선택한 사인을 투명 PNG로 내려받습니다.</p></div></li>
+        <li><span>1</span><div><strong>입력</strong><p>이름을 입력하거나 직접 그리거나 이미지를 올립니다.</p></div></li>
+        <li><span>2</span><div><strong>선택</strong><p>정리된 결과를 비교하고 하나를 고릅니다.</p></div></li>
+        <li><span>3</span><div><strong>저장</strong><p>선택한 결과를 투명 PNG로 내려받습니다.</p></div></li>
       </ol>
     </section>
   </main>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="app.js"></script>
+  <script src="app.js?v=20260922-2"></script>
 </body>
 </html>
