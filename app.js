@@ -161,15 +161,16 @@
     const script=detectScript(name);
     const style=sealStyles[state.sealStyle] || sealStyles.goin;
     const cx=CANVAS_W/2, cy=CANVAS_H/2;
-    const size=390;
+
+    // 참고 이미지처럼 글자와 테두리 사이의 여백을 줄인 조밀한 인장 비율.
+    const size=354;
     drawSealBorder(ctx,style,cx,cy,size);
 
     const chars=[...name].slice(0,3);
-    const left=cx-80, right=cx+80, top=cy-80, bottom=cy+80;
+    const left=cx-62, right=cx+62, top=cy-64, bottom=cy+64;
 
     if(script==="hanja"){
-      // 한자: 전통 인장 읽기 방향 = 오른쪽 열 위→아래, 그 다음 왼쪽 열 위→아래.
-      // 3자 이름은 [성][이름1] / [이름2][印] 순으로 배치.
+      // 한자형: 오른쪽 열 위→아래, 왼쪽 열 위→아래. 印도 동일한 시각 크기.
       const source=[chars[0]||"",chars[1]||"",chars[2]||"","印"];
       const cells=[
         {c:source[0],x:right,y:top},
@@ -177,31 +178,29 @@
         {c:source[2],x:left,y:top},
         {c:source[3],x:left,y:bottom}
       ];
-      cells.filter(cell=>cell.c).forEach(cell=>drawSealGlyph(ctx,cell.c,cell.x,cell.y,style,100));
+      cells.filter(cell=>cell.c).forEach(cell=>drawSealGlyph(ctx,cell.c,cell.x,cell.y,style,122));
     } else {
-      // 한글: 현대 개인도장에서 읽기 쉬운 가로 2×2 배치.
-      // 3자 이름은 윗줄 2자, 아랫줄 이름 마지막 글자 + '인'.
+      // 한글형: 2×2 조밀 배치. '인'도 이름 글자와 같은 크기로 맞춘다.
       if(chars.length===1){
-        drawSealGlyph(ctx,chars[0],left,cy,style,116);
-        drawSealGlyph(ctx,"인",right,cy,style,88);
+        drawSealGlyph(ctx,chars[0],left,cy,style,126);
+        drawSealGlyph(ctx,"인",right,cy,style,126);
       } else if(chars.length===2){
-        drawSealGlyph(ctx,chars[0],left,top,style,104);
-        drawSealGlyph(ctx,chars[1],right,top,style,104);
-        drawSealGlyph(ctx,"인",right,bottom,style,84);
+        drawSealGlyph(ctx,chars[0],left,top,style,122);
+        drawSealGlyph(ctx,chars[1],right,top,style,122);
+        drawSealGlyph(ctx,"인",right,bottom,style,122);
       } else {
-        drawSealGlyph(ctx,chars[0],left,top,style,102);
-        drawSealGlyph(ctx,chars[1],right,top,style,102);
-        drawSealGlyph(ctx,chars[2],left,bottom,style,102);
-        drawSealGlyph(ctx,"인",right,bottom,style,84);
+        drawSealGlyph(ctx,chars[0],left,top,style,122);
+        drawSealGlyph(ctx,chars[1],right,top,style,122);
+        drawSealGlyph(ctx,chars[2],left,bottom,style,122);
+        drawSealGlyph(ctx,"인",right,bottom,style,122);
       }
     }
 
-    // subtle inner pressure gives a stamped rather than typeset feel
     if(style.rough){
       ctx.save();
       ctx.globalAlpha=.07;
-      ctx.translate(2,-1);
-      drawSealBorder(ctx,{...style,border:"single",rough:false},cx,cy,size-8);
+      ctx.translate(1.5,-1);
+      drawSealBorder(ctx,{...style,border:"single",rough:false},cx,cy,size-7);
       ctx.restore();
     }
   }
