@@ -156,52 +156,53 @@
     clearCanvas(canvas);
     const ctx=canvas.getContext("2d");
     const name=cleanSealName(rawText);
+    if(!name) return;
+
     const script=detectScript(name);
     const style=sealStyles[state.sealStyle] || sealStyles.goin;
     const cx=CANVAS_W/2, cy=CANVAS_H/2;
     const size=390;
     drawSealBorder(ctx,style,cx,cy,size);
 
-    const chars=[...name];
-    const left=cx-78, right=cx+78, top=cy-78, bottom=cy+78;
+    const chars=[...name].slice(0,3);
+    const left=cx-80, right=cx+80, top=cy-80, bottom=cy+80;
 
     if(script==="hanja"){
-      // Traditional seal reading order: right column top-to-bottom, then left column.
-      const cells=[];
-      if(chars.length===2){
-        cells.push({c:chars[0],x:right,y:top},{c:chars[1],x:right,y:bottom},{c:"印",x:left,y:bottom});
-      } else if(chars.length===3){
-        cells.push(
-          {c:chars[0],x:right,y:top},
-          {c:chars[1],x:right,y:bottom},
-          {c:chars[2],x:left,y:top},
-          {c:"印",x:left,y:bottom}
-        );
-      } else {
-        const source=[...chars.slice(0,3),"印"];
-        cells.push(
-          {c:source[0],x:right,y:top},
-          {c:source[1],x:right,y:bottom},
-          {c:source[2],x:left,y:top},
-          {c:source[3],x:left,y:bottom}
-        );
-      }
-      cells.forEach(cell=>drawSealGlyph(ctx,cell.c,cell.x,cell.y,style,104));
+      // 한자: 전통 인장 읽기 방향 = 오른쪽 열 위→아래, 그 다음 왼쪽 열 위→아래.
+      // 3자 이름은 [성][이름1] / [이름2][印] 순으로 배치.
+      const source=[chars[0]||"",chars[1]||"",chars[2]||"","印"];
+      const cells=[
+        {c:source[0],x:right,y:top},
+        {c:source[1],x:right,y:bottom},
+        {c:source[2],x:left,y:top},
+        {c:source[3],x:left,y:bottom}
+      ];
+      cells.filter(cell=>cell.c).forEach(cell=>drawSealGlyph(ctx,cell.c,cell.x,cell.y,style,100));
     } else {
-      // Korean personal seal: name follows normal left-to-right reading; 인 occupies the final lower-right cell.
+      // 한글: 현대 개인도장에서 읽기 쉬운 가로 2×2 배치.
+      // 3자 이름은 윗줄 2자, 아랫줄 이름 마지막 글자 + '인'.
       if(chars.length===1){
         drawSealGlyph(ctx,chars[0],left,cy,style,116);
-        drawSealGlyph(ctx,"인",right,cy,style,92);
+        drawSealGlyph(ctx,"인",right,cy,style,88);
       } else if(chars.length===2){
-        drawSealGlyph(ctx,chars[0],left,top,style,105);
-        drawSealGlyph(ctx,chars[1],right,top,style,105);
-        drawSealGlyph(ctx,"인",right,bottom,style,88);
+        drawSealGlyph(ctx,chars[0],left,top,style,104);
+        drawSealGlyph(ctx,chars[1],right,top,style,104);
+        drawSealGlyph(ctx,"인",right,bottom,style,84);
       } else {
-        drawSealGlyph(ctx,chars[0],left,top,style,103);
-        drawSealGlyph(ctx,chars[1],right,top,style,103);
-        drawSealGlyph(ctx,chars[2],left,bottom,style,103);
-        drawSealGlyph(ctx,"인",right,bottom,style,86);
+        drawSealGlyph(ctx,chars[0],left,top,style,102);
+        drawSealGlyph(ctx,chars[1],right,top,style,102);
+        drawSealGlyph(ctx,chars[2],left,bottom,style,102);
+        drawSealGlyph(ctx,"인",right,bottom,style,84);
       }
+    }
+
+    // subtle inner pressure gives a stamped rather than typeset feel
+    if(style.rough){
+      ctx.save();
+      ctx.globalAlpha=.07;
+      ctx.translate(2,-1);
+      drawSealBorder(ctx,{...style,border:"single",rough:false},cx,cy,size-8);
+      ctx.restore();
     }
   }
 
@@ -209,47 +210,77 @@
     clearCanvas(canvas);
     const ctx=canvas.getContext("2d");
     const safe=(text||"Signature").trim().slice(0,14);
-    const fonts=["Nanum Pen Script","Gaegu","Nanum Pen Script"];
-    const slants=[-.20,-.12,-.24];
-    const rotations=[-.035,-.06,-.018];
-    const yOffsets=[-18,-8,-28];
+    const fonts=["Nanum Pen Script","Nanum Pen Script","Gaegu"];
+    const weights=[400,400,700];
+    const slants=[-.28,-.20,-.16];
+    const rotations=[-.045,-.025,-.065];
+    const yOffsets=[-28,-20,-8];
 
     ctx.save();
-    ctx.translate(CANVAS_W/2,CANVAS_H/2+8);
+    ctx.translate(CANVAS_W/2,CANVAS_H/2+12);
     ctx.rotate(rotations[variant]);
     ctx.transform(1,0,slants[variant],1,0,0);
     ctx.fillStyle=INK;
     ctx.textAlign="center";
     ctx.textBaseline="middle";
-    const size=fitFontSize(ctx,safe,fonts[variant],850,variant===1?230:265,115,variant===1?700:400);
-    ctx.font=`${variant===1?700:400} ${size}px "${fonts[variant]}"`;
-    ctx.fillText(safe,-20,yOffsets[variant]);
 
-    const width=Math.min(830,Math.max(350,ctx.measureText(safe).width));
-    ctx.strokeStyle=INK;ctx.lineCap="round";ctx.lineJoin="round";
+    const size=fitFontSize(ctx,safe,fonts[variant],820,variant===2?225:270,112,weights[variant]);
+    ctx.font=`${weights[variant]} ${size}px "${fonts[variant]}"`;
 
-    // Long terminal stroke makes the typed name read as a signature, not handwriting.
-    ctx.lineWidth=variant===1?8:6;
+    // Slight overlap/offset makes typed names feel less like a font sample.
+    if([...safe].length<=4 && /[가-힣]/.test(safe)){
+      const chars=[...safe];
+      const widths=chars.map(ch=>ctx.measureText(ch).width);
+      const total=widths.reduce((a,b)=>a+b,0)*.72;
+      let cursor=-total/2;
+      chars.forEach((ch,i)=>{
+        const w=widths[i]*.72;
+        ctx.save();
+        ctx.translate(cursor+w/2,(i%2?5:-5)+(variant===2?i*2:0));
+        ctx.rotate((i-1)*.018);
+        ctx.fillText(ch,0,yOffsets[variant]);
+        ctx.restore();
+        cursor+=w;
+      });
+    } else {
+      ctx.fillText(safe,-18,yOffsets[variant]);
+    }
+
+    const measured=Math.max(360,Math.min(820,ctx.measureText(safe).width*.82));
+    ctx.strokeStyle=INK;
+    ctx.lineCap="round";
+    ctx.lineJoin="round";
+
+    // terminal flourish
+    ctx.lineWidth=variant===2?7:5.5;
     ctx.beginPath();
-    ctx.moveTo(width*.10,25);
-    ctx.bezierCurveTo(width*.31,12,width*.43,68,width*.62,-6);
-    ctx.bezierCurveTo(width*.69,-35,width*.73,-34,width*.70,-5);
+    ctx.moveTo(measured*.08,18);
+    ctx.bezierCurveTo(measured*.30,-2,measured*.43,70,measured*.63,-18);
+    ctx.bezierCurveTo(measured*.70,-48,measured*.77,-40,measured*.72,-2);
     ctx.stroke();
 
+    // underline / return stroke
     if(variant!==1){
-      ctx.lineWidth=variant===2?5:3.5;
+      ctx.lineWidth=variant===2?4.8:3.4;
       ctx.beginPath();
-      ctx.moveTo(-width*.47,variant===2?120:110);
-      ctx.bezierCurveTo(-width*.15,98,width*.17,132,width*.56,92);
+      ctx.moveTo(-measured*.48,118);
+      ctx.bezierCurveTo(-measured*.19,102,measured*.20,135,measured*.57,86);
+      ctx.stroke();
+    } else {
+      ctx.lineWidth=3.2;
+      ctx.beginPath();
+      ctx.moveTo(-measured*.38,108);
+      ctx.bezierCurveTo(-measured*.08,90,measured*.27,111,measured*.52,76);
       ctx.stroke();
     }
-    if(variant===2){
-      ctx.lineWidth=3;
-      ctx.beginPath();
-      ctx.moveTo(width*.45,93);
-      ctx.bezierCurveTo(width*.68,60,width*.76,24,width*.66,-18);
-      ctx.stroke();
-    }
+
+    // final upward flick
+    ctx.lineWidth=2.8;
+    ctx.beginPath();
+    ctx.moveTo(measured*.48,88);
+    ctx.bezierCurveTo(measured*.66,54,measured*.76,18,measured*.68,-22);
+    ctx.stroke();
+
     ctx.restore();
   }
 
