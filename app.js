@@ -161,38 +161,65 @@
     const script=detectScript(name);
     const style=sealStyles[state.sealStyle] || sealStyles.goin;
     const cx=CANVAS_W/2, cy=CANVAS_H/2;
-
-    // 참고 이미지처럼 글자와 테두리 사이의 여백을 줄인 조밀한 인장 비율.
     const size=354;
     drawSealBorder(ctx,style,cx,cy,size);
 
-    const chars=[...name].slice(0,3);
-    const left=cx-62, right=cx+62, top=cy-64, bottom=cy+64;
+    const chars=[...name].slice(0,4);
 
-    if(script==="hanja"){
-      // 한자형: 오른쪽 열 위→아래, 왼쪽 열 위→아래. 印도 동일한 시각 크기.
-      const source=[chars[0]||"",chars[1]||"",chars[2]||"","印"];
-      const cells=[
-        {c:source[0],x:right,y:top},
-        {c:source[1],x:right,y:bottom},
-        {c:source[2],x:left,y:top},
-        {c:source[3],x:left,y:bottom}
-      ];
-      cells.filter(cell=>cell.c).forEach(cell=>drawSealGlyph(ctx,cell.c,cell.x,cell.y,style,122));
-    } else {
-      // 한글형: 2×2 조밀 배치. '인'도 이름 글자와 같은 크기로 맞춘다.
-      if(chars.length===1){
-        drawSealGlyph(ctx,chars[0],left,cy,style,126);
-        drawSealGlyph(ctx,"인",right,cy,style,126);
-      } else if(chars.length===2){
-        drawSealGlyph(ctx,chars[0],left,top,style,122);
-        drawSealGlyph(ctx,chars[1],right,top,style,122);
-        drawSealGlyph(ctx,"인",right,bottom,style,122);
+    // 1글자: 중앙에 크게.
+    if(chars.length===1){
+      drawSealGlyph(ctx,chars[0],cx,cy,style,166);
+    }
+
+    // 2글자: 참고 사례처럼 인/印을 억지로 붙이지 않고 세로 한 줄로 크게 배치.
+    // 원형 인장 안에서 위·아래 여백을 동일하게 두어 가장 안정적으로 보이게 한다.
+    else if(chars.length===2){
+      const top=cy-72;
+      const bottom=cy+72;
+      drawSealGlyph(ctx,chars[0],cx,top,style,136);
+      drawSealGlyph(ctx,chars[1],cx,bottom,style,136);
+    }
+
+    // 3글자: 2×2 균형을 위해 인/印을 추가.
+    else if(chars.length===3){
+      const left=cx-62, right=cx+62, top=cy-64, bottom=cy+64;
+      if(script==="hanja"){
+        // 한자형 읽기 방향: 우측 열 위→아래, 좌측 열 위→아래.
+        const source=[chars[0],chars[1],chars[2],"印"];
+        [
+          {c:source[0],x:right,y:top},
+          {c:source[1],x:right,y:bottom},
+          {c:source[2],x:left,y:top},
+          {c:source[3],x:left,y:bottom}
+        ].forEach(cell=>drawSealGlyph(ctx,cell.c,cell.x,cell.y,style,122));
       } else {
-        drawSealGlyph(ctx,chars[0],left,top,style,122);
-        drawSealGlyph(ctx,chars[1],right,top,style,122);
-        drawSealGlyph(ctx,chars[2],left,bottom,style,122);
-        drawSealGlyph(ctx,"인",right,bottom,style,122);
+        // 한글형: 화면에서 읽기 쉬운 2×2 가로 배치, 인은 오른쪽 아래.
+        [
+          {c:chars[0],x:left,y:top},
+          {c:chars[1],x:right,y:top},
+          {c:chars[2],x:left,y:bottom},
+          {c:"인",x:right,y:bottom}
+        ].forEach(cell=>drawSealGlyph(ctx,cell.c,cell.x,cell.y,style,122));
+      }
+    }
+
+    // 4글자: 인/印을 추가하지 않고 네 글자를 그대로 꽉 채운다.
+    else {
+      const left=cx-62, right=cx+62, top=cy-64, bottom=cy+64;
+      if(script==="hanja"){
+        [
+          {c:chars[0],x:right,y:top},
+          {c:chars[1],x:right,y:bottom},
+          {c:chars[2],x:left,y:top},
+          {c:chars[3],x:left,y:bottom}
+        ].forEach(cell=>drawSealGlyph(ctx,cell.c,cell.x,cell.y,style,118));
+      } else {
+        [
+          {c:chars[0],x:left,y:top},
+          {c:chars[1],x:right,y:top},
+          {c:chars[2],x:left,y:bottom},
+          {c:chars[3],x:right,y:bottom}
+        ].forEach(cell=>drawSealGlyph(ctx,cell.c,cell.x,cell.y,style,118));
       }
     }
 
