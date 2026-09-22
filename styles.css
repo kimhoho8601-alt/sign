@@ -363,3 +363,65 @@ button{cursor:pointer}
   *,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}
   .hero-mark path{stroke-dashoffset:0}
 }
+
+/* Name maker: signature / seal */
+.generator-switch{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0 14px;
+}
+.kind-btn{
+  min-height:58px;padding:10px 12px;border:1px solid var(--line);border-radius:11px;
+  background:#fff;text-align:left;transition:.18s ease;
+}
+.kind-btn b,.kind-btn small{display:block}
+.kind-btn b{font-size:12px}
+.kind-btn small{margin-top:3px;color:var(--muted);font-size:9px}
+.kind-btn.active{border-color:var(--red);background:var(--red-soft);color:var(--red);box-shadow:0 0 0 2px rgba(201,0,43,.05)}
+.kind-btn.active small{color:#9d4255}
+.signature-controls,.seal-controls{margin-top:4px}
+.signature-note{
+  display:flex;gap:11px;padding:14px;border:1px solid #f0e5e7;border-radius:12px;background:#faf7f8;
+}
+.signature-note>span{
+  width:30px;height:30px;display:grid;place-items:center;flex:0 0 auto;
+  border-radius:50%;background:#fff;color:var(--red);font-size:12px;
+}
+.signature-note p{margin:0}
+.signature-note strong,.signature-note small{display:block}
+.signature-note strong{font-size:11px}
+.signature-note small{margin-top:5px;color:var(--muted);font-size:9px;line-height:1.55}
+.seal-controls{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seal-controls .seal-layout-guide,.seal-controls .seal-help{grid-column:1/-1}
+.select-input{
+  width:100%;height:46px;padding:0 34px 0 12px;border:1px solid var(--line);
+  border-radius:10px;background:#fff;color:var(--ink);font:600 11px "IBM Plex Sans KR",sans-serif;
+}
+.select-input:focus{outline:0;border-color:var(--red);box-shadow:0 0 0 3px var(--red-soft)}
+.seal-layout-guide{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:2px;
+}
+.seal-layout-guide>div{
+  min-width:0;display:flex;align-items:center;gap:10px;padding:10px;
+  border:1px solid var(--line);border-radius:11px;background:#fff;
+}
+.seal-layout-guide p{margin:0}
+.seal-layout-guide strong,.seal-layout-guide small{display:block}
+.seal-layout-guide strong{font-size:10px}
+.seal-layout-guide small{margin-top:2px;color:var(--muted);font-size:8px;line-height:1.45}
+.mini-seal{
+  width:48px;height:48px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;
+  flex:0 0 auto;padding:5px;border:2px solid var(--red);border-radius:50%;color:var(--red);
+  font:700 10px "Noto Serif KR",serif;line-height:1;
+}
+.mini-seal i{display:grid;place-items:center;font-style:normal}
+.mini-seal.hanja i:nth-child(1){grid-column:1;grid-row:1}
+.mini-seal.hanja i:nth-child(2){grid-column:2;grid-row:1}
+.mini-seal.hanja i:nth-child(3){grid-column:1;grid-row:2}
+.mini-seal.hanja i:nth-child(4){grid-column:2;grid-row:2}
+.seal-help{margin:0;color:var(--muted);font-size:9px;line-height:1.55}
+.result-grid.one-option{grid-template-columns:minmax(280px,520px);justify-content:center}
+.result-grid.one-option .sign-stage{aspect-ratio:1.55/1}
+@media(max-width:620px){
+  .seal-controls{grid-template-columns:1fr}
+  .seal-controls .seal-layout-guide,.seal-controls .seal-help{grid-column:auto}
+  .seal-layout-guide{grid-template-columns:1fr}
+}
