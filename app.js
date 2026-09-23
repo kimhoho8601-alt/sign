@@ -308,6 +308,7 @@
     ctx.stroke();
 
     ctx.restore();
+    centerInkOptically(canvas,CANVAS_W/2,CANVAS_H/2,1,.22);
   }
 
   function setVisibleResultCount(count){
@@ -390,7 +391,7 @@
       else{const ink=Math.max(22,Math.min(85,brightness*.3));data[i]=ink;data[i+1]=ink;data[i+2]=ink;}
       data[i+3]=alpha;
     }
-    ctx.putImageData(frame,0,0);return work;
+    ctx.putImageData(frame,0,0);centerInkOptically(work,CANVAS_W/2,CANVAS_H/2,1,.18);return work;
   }
 
   function renderUploadOptions(){
@@ -420,6 +421,7 @@
     }
     ctx.putImageData(frame,0,0);
     if(variant===1){ctx.save();ctx.globalAlpha=.22;ctx.drawImage(out,1.5,0);ctx.drawImage(out,-1.5,0);ctx.restore();}
+    centerInkOptically(out,CANVAS_W/2,CANVAS_H/2,1,.18);
     return out;
   }
 
@@ -449,6 +451,39 @@
       else{setVisibleResultCount(3);els.canvases.forEach(clearCanvas);setModeLabels(drawLabels);els.resultTitle.textContent="직접 사인해 주세요";selectCard(0);}
     }else if(state.uploadImage)renderUploadOptions();
     else{setVisibleResultCount(3);els.canvases.forEach(clearCanvas);setModeLabels(uploadLabels);els.resultTitle.textContent="사인 이미지를 올려주세요";selectCard(0);}
+  }
+
+  function centerInkOptically(source, targetX=CANVAS_W/2, targetY=CANVAS_H/2, strengthX=1, strengthY=.35){
+    const ctx=source.getContext("2d",{willReadFrequently:true});
+    const {width,height}=source;
+    const data=ctx.getImageData(0,0,width,height).data;
+
+    let mass=0,sumX=0,sumY=0;
+    for(let y=0;y<height;y++){
+      for(let x=0;x<width;x++){
+        const a=data[(y*width+x)*4+3];
+        if(a>8){
+          const w=a/255;
+          mass+=w;
+          sumX+=x*w;
+          sumY+=y*w;
+        }
+      }
+    }
+    if(!mass) return source;
+
+    const cx=sumX/mass;
+    const cy=sumY/mass;
+    const dx=(targetX-cx)*strengthX;
+    const dy=(targetY-cy)*strengthY;
+
+    const copy=document.createElement("canvas");
+    copy.width=width; copy.height=height;
+    copy.getContext("2d").drawImage(source,0,0);
+
+    ctx.clearRect(0,0,width,height);
+    ctx.drawImage(copy,dx,dy);
+    return source;
   }
 
   function trimCanvas(source,padding=46){
