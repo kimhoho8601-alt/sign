@@ -308,7 +308,7 @@
     ctx.stroke();
 
     ctx.restore();
-    centerInkOptically(canvas,CANVAS_W/2,CANVAS_H/2,1,.22);
+    centerInkBounds(canvas,CANVAS_W/2,CANVAS_H/2,false);
   }
 
   function setVisibleResultCount(count){
@@ -391,7 +391,7 @@
       else{const ink=Math.max(22,Math.min(85,brightness*.3));data[i]=ink;data[i+1]=ink;data[i+2]=ink;}
       data[i+3]=alpha;
     }
-    ctx.putImageData(frame,0,0);centerInkOptically(work,CANVAS_W/2,CANVAS_H/2,1,.18);return work;
+    ctx.putImageData(frame,0,0);centerInkBounds(work,CANVAS_W/2,CANVAS_H/2,false);return work;
   }
 
   function renderUploadOptions(){
@@ -406,22 +406,47 @@
   }
 
   function cloneDrawVariant(source,variant){
-    const out=document.createElement("canvas");out.width=CANVAS_W;out.height=CANVAS_H;
+    const out=document.createElement("canvas");
+    out.width=CANVAS_W;
+    out.height=CANVAS_H;
     const ctx=out.getContext("2d",{willReadFrequently:true});
-    const trimmed=trimCanvas(source,28);
+
+    const trimmed=trimCanvas(source,18);
     const scale=Math.min(900/trimmed.width,390/trimmed.height,1.7);
-    const w=trimmed.width*scale,h=trimmed.height*scale;
+    const w=trimmed.width*scale;
+    const h=trimmed.height*scale;
+
+    // 먼저 기하학적으로 캔버스 중앙에 배치
     ctx.drawImage(trimmed,(CANVAS_W-w)/2,(CANVAS_H-h)/2,w,h);
-    if(variant===0)return out;
-    const frame=ctx.getImageData(0,0,CANVAS_W,CANVAS_H),data=frame.data;
-    for(let i=0;i<data.length;i+=4){
-      if(data[i+3]<4)continue;
-      if(variant===2){data[i]=201;data[i+1]=0;data[i+2]=43;}
-      else{data[i]=36;data[i+1]=27;data[i+2]=29;data[i+3]=Math.min(255,data[i+3]*1.3);}
+
+    if(variant!==0){
+      const frame=ctx.getImageData(0,0,CANVAS_W,CANVAS_H);
+      const data=frame.data;
+      for(let i=0;i<data.length;i+=4){
+        if(data[i+3]<4) continue;
+        if(variant===2){
+          data[i]=201; data[i+1]=0; data[i+2]=43;
+        } else {
+          data[i]=36; data[i+1]=27; data[i+2]=29;
+          data[i+3]=Math.min(255,data[i+3]*1.3);
+        }
+      }
+      ctx.putImageData(frame,0,0);
+
+      if(variant===1){
+        const base=document.createElement("canvas");
+        base.width=CANVAS_W;base.height=CANVAS_H;
+        base.getContext("2d").drawImage(out,0,0);
+        ctx.save();
+        ctx.globalAlpha=.18;
+        ctx.drawImage(base,1.5,0);
+        ctx.drawImage(base,-1.5,0);
+        ctx.restore();
+      }
     }
-    ctx.putImageData(frame,0,0);
-    if(variant===1){ctx.save();ctx.globalAlpha=.22;ctx.drawImage(out,1.5,0);ctx.drawImage(out,-1.5,0);ctx.restore();}
-    centerInkOptically(out,CANVAS_W/2,CANVAS_H/2,1,.18);
+
+    // 핵심: 1/2/3안 모두 실제 획의 좌우 끝값 기준으로 중앙을 다시 맞춘다.
+    centerInkBounds(out,CANVAS_W/2,CANVAS_H/2,false);
     return out;
   }
 
@@ -451,6 +476,39 @@
       else{setVisibleResultCount(3);els.canvases.forEach(clearCanvas);setModeLabels(drawLabels);els.resultTitle.textContent="직접 사인해 주세요";selectCard(0);}
     }else if(state.uploadImage)renderUploadOptions();
     else{setVisibleResultCount(3);els.canvases.forEach(clearCanvas);setModeLabels(uploadLabels);els.resultTitle.textContent="사인 이미지를 올려주세요";selectCard(0);}
+  }
+
+  function centerInkBounds(source, targetX=CANVAS_W/2, targetY=CANVAS_H/2, adjustY=false){
+    const ctx=source.getContext("2d",{willReadFrequently:true});
+    const {width,height}=source;
+    const data=ctx.getImageData(0,0,width,height).data;
+    let minX=width,minY=height,maxX=-1,maxY=-1;
+
+    for(let y=0;y<height;y++){
+      for(let x=0;x<width;x++){
+        if(data[(y*width+x)*4+3]>8){
+          if(x<minX)minX=x;
+          if(x>maxX)maxX=x;
+          if(y<minY)minY=y;
+          if(y>maxY)maxY=y;
+        }
+      }
+    }
+    if(maxX<0) return source;
+
+    const boundsCX=(minX+maxX)/2;
+    const boundsCY=(minY+maxY)/2;
+    const dx=targetX-boundsCX;
+    const dy=adjustY ? targetY-boundsCY : 0;
+
+    if(Math.abs(dx)<.5 && Math.abs(dy)<.5) return source;
+
+    const copy=document.createElement("canvas");
+    copy.width=width; copy.height=height;
+    copy.getContext("2d").drawImage(source,0,0);
+    ctx.clearRect(0,0,width,height);
+    ctx.drawImage(copy,dx,dy);
+    return source;
   }
 
   function centerInkOptically(source, targetX=CANVAS_W/2, targetY=CANVAS_H/2, strengthX=1, strengthY=.35){
