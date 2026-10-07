@@ -593,7 +593,7 @@
   function downloadSelected(){
     const selected=trimCanvas(els.canvases[state.selectedIndex]);
     const link=document.createElement("a");
-    link.download=`${safeFileBase()}-${state.textKind==="seal"?"seal":"sign"}-${state.selectedIndex+1}.png`;
+    link.download=`${safeFileBase()}-${state.mode==="text"&&state.textKind==="seal"?"seal":"sign"}-${state.selectedIndex+1}.png`;
     link.href=selected.toDataURL("image/png");link.click();showToast("투명 PNG를 저장했습니다.");
   }
 
