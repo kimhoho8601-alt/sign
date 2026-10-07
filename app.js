@@ -12,6 +12,7 @@
     signatureFont:"pen",
     signatureWeight:100,
     selectedIndex: 0,
+    resultsReady: false,
     uploadImage: null,
     uploadName: "",
     generation: 0,
@@ -66,6 +67,7 @@
   const weightRange=document.getElementById("signatureWeightRange");
   const weightOutput=document.getElementById("signatureWeightOutput");
   let textRenderVersion=0;
+  let drawRestoreVersion=0;
   const signatureLabels = ["이름만 사인", "퀵 사인", "언더라인 사인"];
   const drawLabels = ["직접 그린 사인", "선명한 잉크", "레드 잉크"];
   const uploadLabels = ["원본 정리", "선명한 잉크", "레드 잉크"];
@@ -88,6 +90,24 @@
 
   function clearCanvas(canvas) {
     canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function hasInk(canvas) {
+    const pixels=canvas.getContext("2d",{willReadFrequently:true}).getImageData(0,0,canvas.width,canvas.height).data;
+    for(let i=3;i<pixels.length;i+=4)if(pixels[i]>8)return true;
+    return false;
+  }
+
+  function updateExportButtons() {
+    const ready=state.resultsReady&&hasInk(els.canvases[state.selectedIndex]);
+    els.downloadBtn.disabled=!ready;els.copyBtn.disabled=!ready;
+    return ready;
+  }
+
+  function clearResults() {
+    state.resultsReady=false;
+    els.canvases.forEach(clearCanvas);
+    updateExportButtons();
   }
 
   function roundedRect(ctx, x, y, w, h, r) {
@@ -357,14 +377,15 @@
     });
     const labels=currentLabels();
     els.selectedLabel.textContent=labels[index]||labels[0];
+    updateExportButtons();
   }
 
   async function renderTextOptions(preserveSelection=false){
     const version=++textRenderVersion;
     const selected=preserveSelection===true?state.selectedIndex:0;
     const value=els.nameInput.value.trim();
-    if(!value){showToast("이름 또는 문구를 입력해 주세요.");els.nameInput.focus();return;}
-    els.downloadBtn.disabled=true;els.copyBtn.disabled=true;
+    if(!value){clearResults();showToast("이름 또는 문구를 입력해 주세요.");els.nameInput.focus();return;}
+    state.resultsReady=false;updateExportButtons();
     try{
       const style=state.textKind==="seal"?sealStyles[state.sealStyle]:signatureFonts[state.signatureFont];
       await document.fonts.load(`${style.weight} 270px "${style.font}"`,value);
@@ -386,8 +407,8 @@
       setModeLabels(signatureLabels);
       els.resultTitle.textContent="사인 스타일을 골라보세요";
     }
+    state.resultsReady=true;
     selectCard(selected);
-    els.downloadBtn.disabled=false;els.copyBtn.disabled=false;
   }
 
   function getContainRect(img,targetW,targetH,padding=90){
@@ -418,13 +439,15 @@
   }
 
   function renderUploadOptions(){
-    if(!state.uploadImage){showToast("먼저 자필 사인 이미지를 올려 주세요.");return;}
+    if(state.mode!=="upload")return;
+    if(!state.uploadImage){clearResults();showToast("먼저 자필 사인 이미지를 올려 주세요.");return;}
     setVisibleResultCount(3);
     const threshold=Number(els.thresholdRange.value);
     els.canvases.forEach((canvas,index)=>{
       clearCanvas(canvas);
       canvas.getContext("2d").drawImage(createProcessedUpload(state.uploadImage,index,threshold),0,0);
     });
+    state.resultsReady=true;
     setModeLabels(uploadLabels);els.resultTitle.textContent="정리된 사인을 골라보세요";selectCard(state.selectedIndex);
   }
 
@@ -474,9 +497,11 @@
   }
 
   function renderDrawOptions(){
-    if(!state.hasDrawing){showToast("먼저 빈 공간에 사인을 그려 주세요.");return;}
+    if(state.mode!=="draw")return;
+    if(!state.hasDrawing||!hasInk(els.drawCanvas)){clearResults();showToast("먼저 빈 공간에 사인을 그려 주세요.");return;}
     setVisibleResultCount(3);
     els.canvases.forEach((canvas,index)=>{clearCanvas(canvas);canvas.getContext("2d").drawImage(cloneDrawVariant(els.drawCanvas,index),0,0);});
+    state.resultsReady=true;
     setModeLabels(drawLabels);els.resultTitle.textContent="직접 그린 사인을 골라보세요";selectCard(state.selectedIndex);
   }
 
@@ -490,7 +515,7 @@
 
   function setMode(mode){
     state.mode=mode;
-    textRenderVersion++;els.downloadBtn.disabled=false;els.copyBtn.disabled=false;
+    textRenderVersion++;clearResults();
     els.tabs.forEach(tab=>{const active=tab.dataset.mode===mode;tab.classList.toggle("active",active);tab.setAttribute("aria-selected",String(active));});
     [els.textPanel,els.drawPanel,els.uploadPanel].forEach(panel=>{const active=panel.id===`${mode}Panel`;panel.hidden=!active;panel.classList.toggle("active",active);});
     state.selectedIndex=0;
@@ -591,6 +616,7 @@
   }
 
   function downloadSelected(){
+    if(!updateExportButtons())return;
     const selected=trimCanvas(els.canvases[state.selectedIndex]);
     const link=document.createElement("a");
     link.download=`${safeFileBase()}-${state.mode==="text"&&state.textKind==="seal"?"seal":"sign"}-${state.selectedIndex+1}.png`;
@@ -598,6 +624,7 @@
   }
 
   async function copySelected(){
+    if(!updateExportButtons())return;
     if(!navigator.clipboard||!window.ClipboardItem){showToast("이 브라우저는 이미지 복사를 지원하지 않습니다.");return;}
     try{
       const selected=trimCanvas(els.canvases[state.selectedIndex]);
@@ -620,9 +647,12 @@
   }
   function saveDrawSnapshot(){if(state.drawHistory.length>=20)state.drawHistory.shift();state.drawHistory.push(els.drawCanvas.toDataURL("image/png"));}
   function restoreDrawSnapshot(dataUrl){
+    const version=++drawRestoreVersion;
     clearCanvas(els.drawCanvas);
+    state.hasDrawing=false;els.drawHint.hidden=false;
+    if(state.mode==="draw")clearResults();
     if(!dataUrl){state.hasDrawing=false;els.drawHint.hidden=false;return;}
-    const img=new Image();img.onload=()=>{els.drawCanvas.getContext("2d").drawImage(img,0,0);state.hasDrawing=true;els.drawHint.hidden=true;if(state.mode==="draw")renderDrawOptions();};img.src=dataUrl;
+    const img=new Image();img.onload=()=>{if(version!==drawRestoreVersion)return;els.drawCanvas.getContext("2d").drawImage(img,0,0);state.hasDrawing=hasInk(els.drawCanvas);els.drawHint.hidden=state.hasDrawing;if(state.mode==="draw"){if(state.hasDrawing)renderDrawOptions();else clearResults();}};img.src=dataUrl;
   }
   function initDrawing(){
     const ctx=els.drawCanvas.getContext("2d");ctx.lineCap="round";ctx.lineJoin="round";ctx.strokeStyle=INK;ctx.lineWidth=8;
@@ -632,7 +662,7 @@
     els.drawCanvas.addEventListener("pointerup",finish);els.drawCanvas.addEventListener("pointercancel",finish);els.drawCanvas.addEventListener("pointerleave",e=>{if(e.buttons===0)finish(e);});
   }
   function undoDrawing(){const last=state.drawHistory.pop();if(last===undefined){showToast("취소할 선이 없습니다.");return;}restoreDrawSnapshot(last);}
-  function clearDrawing(showMessage=true){clearCanvas(els.drawCanvas);state.drawHistory=[];state.hasDrawing=false;els.drawHint.hidden=false;if(state.mode==="draw"){els.canvases.forEach(clearCanvas);selectCard(0);}if(showMessage)showToast("그린 내용을 지웠습니다.");}
+  function clearDrawing(showMessage=true){drawRestoreVersion++;clearCanvas(els.drawCanvas);state.drawHistory=[];state.hasDrawing=false;els.drawHint.hidden=false;if(state.mode==="draw"){clearResults();selectCard(0);}if(showMessage)showToast("그린 내용을 지웠습니다.");}
 
   function resetAll(){
     state.selectedIndex=0;state.uploadImage=null;state.uploadName="";state.generation=0;state.textKind="signature";state.sealStyle="goin";state.sealScript="auto";
@@ -670,5 +700,6 @@
   els.thresholdRange.addEventListener("change",renderUploadOptions);
 
   initDrawing();
+  updateExportButtons();
   Promise.race([document.fonts?document.fonts.ready:Promise.resolve(),new Promise(resolve=>setTimeout(resolve,1800))]).then(renderTextOptions);
 })();
