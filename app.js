@@ -320,7 +320,7 @@
     }
 
     ctx.restore();
-    centerInkBounds(canvas,CANVAS_W/2,CANVAS_H/2,false);
+    centerInkBounds(canvas,CANVAS_W/2,CANVAS_H/2,true);
   }
 
   function setVisibleResultCount(count){
@@ -414,7 +414,7 @@
       else{const ink=Math.max(22,Math.min(85,brightness*.3));data[i]=ink;data[i+1]=ink;data[i+2]=ink;}
       data[i+3]=alpha;
     }
-    ctx.putImageData(frame,0,0);centerInkBounds(work,CANVAS_W/2,CANVAS_H/2,false);return work;
+    ctx.putImageData(frame,0,0);centerInkBounds(work,CANVAS_W/2,CANVAS_H/2,true);return work;
   }
 
   function renderUploadOptions(){
@@ -469,7 +469,7 @@
     }
 
     // 핵심: 1/2/3안 모두 실제 획의 좌우 끝값 기준으로 중앙을 다시 맞춘다.
-    centerInkBounds(out,CANVAS_W/2,CANVAS_H/2,false);
+    centerInkBounds(out,CANVAS_W/2,CANVAS_H/2,true);
     return out;
   }
 
@@ -502,7 +502,7 @@
     else{setVisibleResultCount(3);els.canvases.forEach(clearCanvas);setModeLabels(uploadLabels);els.resultTitle.textContent="사인 이미지를 올려주세요";selectCard(0);}
   }
 
-  function centerInkBounds(source, targetX=CANVAS_W/2, targetY=CANVAS_H/2, adjustY=false){
+  function centerInkBounds(source, targetX=CANVAS_W/2, targetY=CANVAS_H/2, adjustY=true){
     const ctx=source.getContext("2d",{willReadFrequently:true});
     const {width,height}=source;
     const data=ctx.getImageData(0,0,width,height).data;
@@ -577,9 +577,11 @@
       if(alpha>8){if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;}
     }
     if(maxX<0)return source;
-    minX=Math.max(0,minX-padding);minY=Math.max(0,minY-padding);maxX=Math.min(width-1,maxX+padding);maxY=Math.min(height-1,maxY+padding);
-    const out=document.createElement("canvas");out.width=maxX-minX+1;out.height=maxY-minY+1;
-    out.getContext("2d").drawImage(source,minX,minY,out.width,out.height,0,0,out.width,out.height);return out;
+    const inkWidth=maxX-minX+1,inkHeight=maxY-minY+1;
+    const out=document.createElement("canvas");
+    out.width=inkWidth+padding*2;out.height=inkHeight+padding*2;
+    out.getContext("2d").drawImage(source,minX,minY,inkWidth,inkHeight,padding,padding,inkWidth,inkHeight);
+    return out;
   }
 
   function safeFileBase(){
