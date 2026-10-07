@@ -66,7 +66,7 @@
   const weightRange=document.getElementById("signatureWeightRange");
   const weightOutput=document.getElementById("signatureWeightOutput");
   let textRenderVersion=0;
-  const signatureLabels = ["플로우 사인", "퀵 사인", "언더라인 사인"];
+  const signatureLabels = ["이름만 사인", "퀵 사인", "언더라인 사인"];
   const drawLabels = ["직접 그린 사인", "선명한 잉크", "레드 잉크"];
   const uploadLabels = ["원본 정리", "선명한 잉크", "레드 잉크"];
 
@@ -263,9 +263,9 @@
       }
       ctx.restore();
     }
-    const slants=[-.28,-.20,-.16];
-    const rotations=[-.045,-.025,-.065];
-    const yOffsets=[-28,-20,-8];
+    const slants=[0,-.42,-.10];
+    const rotations=[0,-.10,0];
+    const yOffsets=[0,0,-25];
 
     ctx.save();
     ctx.translate(CANVAS_W/2,CANVAS_H/2+12);
@@ -275,17 +275,17 @@
     ctx.textAlign="center";
     ctx.textBaseline="middle";
 
-    const size=fitFontSize(ctx,safe,fonts[variant],820,variant===2?225:270,112,weights[variant]);
+    const size=fitFontSize(ctx,safe,fonts[variant],780,variant===1?290:250,112,weights[variant]);
     ctx.font=`${weights[variant]} ${size}px "${fonts[variant]}"`;
 
     // Slight overlap/offset makes typed names feel less like a font sample.
-    if([...safe].length<=4 && /[가-힣]/.test(safe)){
+    if(variant===1 && [...safe].length<=4 && /[가-힣]/.test(safe)){
       const chars=[...safe];
       const widths=chars.map(ch=>ctx.measureText(ch).width);
-      const total=widths.reduce((a,b)=>a+b,0)*.72;
+      const total=widths.reduce((a,b)=>a+b,0)*.66;
       let cursor=-total/2;
       chars.forEach((ch,i)=>{
-        const w=widths[i]*.72;
+        const w=widths[i]*.66;
         ctx.save();
         ctx.translate(cursor+w/2,(i%2?5:-5)+(variant===2?i*2:0));
         ctx.rotate((i-1)*.018);
@@ -294,7 +294,7 @@
         cursor+=w;
       });
     } else {
-      inkText(safe,-18,yOffsets[variant]);
+      inkText(safe,0,yOffsets[variant]);
     }
 
     const measured=Math.max(360,Math.min(820,ctx.measureText(safe).width*.82));
@@ -302,35 +302,22 @@
     ctx.lineCap="round";
     ctx.lineJoin="round";
 
-    // terminal flourish
-    ctx.lineWidth=(variant===2?7:5.5)*thickness;
-    ctx.beginPath();
-    ctx.moveTo(measured*.08,18);
-    ctx.bezierCurveTo(measured*.30,-2,measured*.43,70,measured*.63,-18);
-    ctx.bezierCurveTo(measured*.70,-48,measured*.77,-40,measured*.72,-2);
-    ctx.stroke();
-
-    // underline / return stroke
-    if(variant!==1){
-      ctx.lineWidth=(variant===2?4.8:3.4)*thickness;
+    // Each option has a distinct structure; option 0 contains only the name.
+    if(variant===1){
+      // Compact, strongly slanted text with a single short terminal stroke.
+      ctx.lineWidth=5.5*thickness;
       ctx.beginPath();
-      ctx.moveTo(-measured*.48,118);
-      ctx.bezierCurveTo(-measured*.19,102,measured*.20,135,measured*.57,86);
+      ctx.moveTo(measured*.28,35);
+      ctx.bezierCurveTo(measured*.40,50,measured*.53,12,measured*.62,-25);
       ctx.stroke();
-    } else {
-      ctx.lineWidth=3.2*thickness;
+    } else if(variant===2){
+      // Open, level lettering with one separate underline, without loops.
+      ctx.lineWidth=4.8*thickness;
       ctx.beginPath();
-      ctx.moveTo(-measured*.38,108);
-      ctx.bezierCurveTo(-measured*.08,90,measured*.27,111,measured*.52,76);
+      ctx.moveTo(-measured*.53,125);
+      ctx.bezierCurveTo(-measured*.15,132,measured*.24,127,measured*.55,112);
       ctx.stroke();
     }
-
-    // final upward flick
-    ctx.lineWidth=2.8*thickness;
-    ctx.beginPath();
-    ctx.moveTo(measured*.48,88);
-    ctx.bezierCurveTo(measured*.66,54,measured*.76,18,measured*.68,-22);
-    ctx.stroke();
 
     ctx.restore();
     centerInkBounds(canvas,CANVAS_W/2,CANVAS_H/2,false);
@@ -346,6 +333,8 @@
   function setModeLabels(labels){
     els.resultCards.forEach((card,index)=>{
       if(labels[index]) card.querySelector(".sign-meta strong").textContent=labels[index];
+      const description=card.querySelector(".sign-description");
+      if(description)description.hidden=state.mode!=="text"||state.textKind!=="signature";
     });
     els.selectedLabel.textContent=labels[state.selectedIndex]||labels[0];
   }

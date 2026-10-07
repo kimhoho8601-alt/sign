@@ -437,3 +437,5 @@ button{cursor:pointer}
 }
 
 .signature-weight .weight-scale{display:flex;justify-content:space-between}.signature-reset{margin:12px 0 14px;font-size:11px;min-height:34px}.signature-controls[hidden]{display:none}
+
+.sign-description{display:block;text-align:left;padding:0 16px 14px;color:var(--muted);font-size:10px}.sign-description[hidden]{display:none}

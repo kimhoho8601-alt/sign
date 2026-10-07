@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gaegu:wght@400;700&family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Manrope:wght@600;700;800&family=Nanum+Myeongjo:wght@400;700;800&family=Nanum+Pen+Script&family=Noto+Serif+KR:wght@500;700;900&family=Single+Day&family=Song+Myung&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261007-1" />
+  <link rel="stylesheet" href="styles.css?v=20261007-2" />
 </head>
 <body>
   <header class="topbar">
@@ -92,7 +92,7 @@
             <button type="button" class="button soft signature-reset" id="resetSignatureBtn">글씨체·굵기 기본값</button>
             <div class="signature-note">
               <span>✦</span>
-              <p><strong>조금 더 날리고, 획은 더 길게.</strong><small>글자를 겹치고 기울인 뒤 꼬리획과 언더라인을 더해 실제 서명에 가까운 3가지 스타일을 만듭니다.</small></p>
+              <p><strong>이름만 · 빠른 흘림 · 한 줄 밑줄.</strong><small>첫 번째는 장식선 없이 이름만, 두 번째는 압축한 흘림과 짧은 끝획, 세 번째는 여유 있는 글자와 한 줄 밑줄로 만듭니다.</small></p>
             </div>
           </div>
 
@@ -197,22 +197,22 @@
         <div class="result-grid" id="resultGrid">
           <button class="sign-card selected" type="button" data-index="0" aria-pressed="true">
             <div class="sign-stage checker"><canvas width="1200" height="600"></canvas></div>
-            <div class="sign-meta"><span><b>01</b><strong>플로우 사인</strong></span><i>선택됨</i></div>
+            <div class="sign-meta"><span><b>01</b><strong>이름만 사인</strong></span><i>선택됨</i></div><small class="sign-description">장식선 없이 · 이름만 깔끔하게</small>
           </button>
           <button class="sign-card" type="button" data-index="1" aria-pressed="false">
             <div class="sign-stage checker"><canvas width="1200" height="600"></canvas></div>
-            <div class="sign-meta"><span><b>02</b><strong>퀵 사인</strong></span><i>선택</i></div>
+            <div class="sign-meta"><span><b>02</b><strong>퀵 사인</strong></span><i>선택</i></div><small class="sign-description">압축한 흘림 · 짧은 끝획</small>
           </button>
           <button class="sign-card" type="button" data-index="2" aria-pressed="false">
             <div class="sign-stage checker"><canvas width="1200" height="600"></canvas></div>
-            <div class="sign-meta"><span><b>03</b><strong>언더라인 사인</strong></span><i>선택</i></div>
+            <div class="sign-meta"><span><b>03</b><strong>언더라인 사인</strong></span><i>선택</i></div><small class="sign-description">여유 있는 글자 · 한 줄 밑줄</small>
           </button>
         </div>
 
         <div class="download-bar">
           <div>
             <span class="download-badge">PNG</span>
-            <p><strong id="selectedLabel">플로우 사인</strong><small>투명 배경 · 자동 여백 정리</small></p>
+            <p><strong id="selectedLabel">이름만 사인</strong><small>투명 배경 · 자동 여백 정리</small></p>
           </div>
           <div class="download-actions">
             <button class="button ghost" id="copyBtn" type="button">이미지 복사</button>
@@ -236,6 +236,6 @@
   </main>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="app.js?v=20261007-1"></script>
+  <script src="app.js?v=20261007-2"></script>
 </body>
 </html>
