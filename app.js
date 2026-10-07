@@ -9,6 +9,8 @@
     textKind: "signature",
     sealStyle: "goin",
     sealScript: "auto",
+    signatureFont:"pen",
+    signatureWeight:100,
     selectedIndex: 0,
     uploadImage: null,
     uploadName: "",
@@ -55,6 +57,15 @@
     toast: document.getElementById("toast")
   };
 
+  const signatureFonts = {
+    pen:{font:"Nanum Pen Script",weight:400}, gaegu:{font:"Gaegu",weight:400},
+    single:{font:"Single Day",weight:400}, batang:{font:"Gowun Batang",weight:400},
+    song:{font:"Song Myung",weight:400}, myeongjo:{font:"Nanum Myeongjo",weight:400}
+  };
+  const fontSelect=document.getElementById("signatureFontSelect");
+  const weightRange=document.getElementById("signatureWeightRange");
+  const weightOutput=document.getElementById("signatureWeightOutput");
+  let textRenderVersion=0;
   const signatureLabels = ["플로우 사인", "퀵 사인", "언더라인 사인"];
   const drawLabels = ["직접 그린 사인", "선명한 잉크", "레드 잉크"];
   const uploadLabels = ["원본 정리", "선명한 잉크", "레드 잉크"];
@@ -236,8 +247,22 @@
     clearCanvas(canvas);
     const ctx=canvas.getContext("2d");
     const safe=(text||"Signature").trim().slice(0,14);
-    const fonts=["Nanum Pen Script","Nanum Pen Script","Gaegu"];
-    const weights=[400,400,700];
+    const style=signatureFonts[state.signatureFont];
+    const fonts=[style.font,style.font,style.font];
+    const weights=[style.weight,style.weight,style.weight];
+    const thickness=state.signatureWeight/100;
+    function inkText(text,x,y){
+      ctx.save();
+      ctx.fillText(text,x,y);
+      if(thickness!==1){
+        ctx.lineJoin="round";
+        ctx.lineWidth=thickness<1?(1-thickness)*5:(thickness-1)*10;
+        ctx.strokeStyle=INK;
+        if(thickness<1)ctx.globalCompositeOperation="destination-out";
+        ctx.strokeText(text,x,y);
+      }
+      ctx.restore();
+    }
     const slants=[-.28,-.20,-.16];
     const rotations=[-.045,-.025,-.065];
     const yOffsets=[-28,-20,-8];
@@ -264,12 +289,12 @@
         ctx.save();
         ctx.translate(cursor+w/2,(i%2?5:-5)+(variant===2?i*2:0));
         ctx.rotate((i-1)*.018);
-        ctx.fillText(ch,0,yOffsets[variant]);
+        inkText(ch,0,yOffsets[variant]);
         ctx.restore();
         cursor+=w;
       });
     } else {
-      ctx.fillText(safe,-18,yOffsets[variant]);
+      inkText(safe,-18,yOffsets[variant]);
     }
 
     const measured=Math.max(360,Math.min(820,ctx.measureText(safe).width*.82));
@@ -278,7 +303,7 @@
     ctx.lineJoin="round";
 
     // terminal flourish
-    ctx.lineWidth=variant===2?7:5.5;
+    ctx.lineWidth=(variant===2?7:5.5)*thickness;
     ctx.beginPath();
     ctx.moveTo(measured*.08,18);
     ctx.bezierCurveTo(measured*.30,-2,measured*.43,70,measured*.63,-18);
@@ -287,13 +312,13 @@
 
     // underline / return stroke
     if(variant!==1){
-      ctx.lineWidth=variant===2?4.8:3.4;
+      ctx.lineWidth=(variant===2?4.8:3.4)*thickness;
       ctx.beginPath();
       ctx.moveTo(-measured*.48,118);
       ctx.bezierCurveTo(-measured*.19,102,measured*.20,135,measured*.57,86);
       ctx.stroke();
     } else {
-      ctx.lineWidth=3.2;
+      ctx.lineWidth=3.2*thickness;
       ctx.beginPath();
       ctx.moveTo(-measured*.38,108);
       ctx.bezierCurveTo(-measured*.08,90,measured*.27,111,measured*.52,76);
@@ -301,7 +326,7 @@
     }
 
     // final upward flick
-    ctx.lineWidth=2.8;
+    ctx.lineWidth=2.8*thickness;
     ctx.beginPath();
     ctx.moveTo(measured*.48,88);
     ctx.bezierCurveTo(measured*.66,54,measured*.76,18,measured*.68,-22);
@@ -345,11 +370,19 @@
     els.selectedLabel.textContent=labels[index]||labels[0];
   }
 
-  function renderTextOptions(){
+  async function renderTextOptions(preserveSelection=false){
+    const version=++textRenderVersion;
+    const selected=preserveSelection===true?state.selectedIndex:0;
     const value=els.nameInput.value.trim();
     if(!value){showToast("이름 또는 문구를 입력해 주세요.");els.nameInput.focus();return;}
+    els.downloadBtn.disabled=true;els.copyBtn.disabled=true;
+    try{
+      const style=state.textKind==="seal"?sealStyles[state.sealStyle]:signatureFonts[state.signatureFont];
+      await document.fonts.load(`${style.weight} 270px "${style.font}"`,value);
+    }catch{showToast("글씨체를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.");}
+    if(version!==textRenderVersion||state.mode!=="text")return;
     state.generation++;
-    state.selectedIndex=0;
+    state.selectedIndex=selected;
     if(state.textKind==="seal"){
       setVisibleResultCount(1);
       drawSeal(els.canvases[0],value);
@@ -364,7 +397,8 @@
       setModeLabels(signatureLabels);
       els.resultTitle.textContent="사인 스타일을 골라보세요";
     }
-    selectCard(0);
+    selectCard(selected);
+    els.downloadBtn.disabled=false;els.copyBtn.disabled=false;
   }
 
   function getContainRect(img,targetW,targetH,padding=90){
@@ -467,6 +501,7 @@
 
   function setMode(mode){
     state.mode=mode;
+    textRenderVersion++;els.downloadBtn.disabled=false;els.copyBtn.disabled=false;
     els.tabs.forEach(tab=>{const active=tab.dataset.mode===mode;tab.classList.toggle("active",active);tab.setAttribute("aria-selected",String(active));});
     [els.textPanel,els.drawPanel,els.uploadPanel].forEach(panel=>{const active=panel.id===`${mode}Panel`;panel.hidden=!active;panel.classList.toggle("active",active);});
     state.selectedIndex=0;
@@ -610,10 +645,21 @@
 
   function resetAll(){
     state.selectedIndex=0;state.uploadImage=null;state.uploadName="";state.generation=0;state.textKind="signature";state.sealStyle="goin";state.sealScript="auto";
+    state.signatureFont="pen";state.signatureWeight=100;fontSelect.value="pen";weightRange.value="100";weightOutput.value="기본 · 100%";
     els.nameInput.value="김홍섭";els.fileInput.value="";els.uploadStatus.hidden=true;els.thresholdRange.value="88";els.thresholdOutput.value="88%";
     els.sealStyleSelect.value="goin";els.sealScriptSelect.value="auto";clearDrawing(false);setTextKind("signature");setMode("text");showToast("처음 상태로 되돌렸습니다.");
   }
 
+  function updateSignature(){
+    state.signatureFont=fontSelect.value;state.signatureWeight=Number(weightRange.value);
+    weightOutput.value=`${state.signatureWeight===100?"기본 · ":""}${state.signatureWeight}%`;
+    if(state.mode==="text"&&state.textKind==="signature")renderTextOptions(true);
+  }
+  fontSelect.addEventListener("change",updateSignature);
+  weightRange.addEventListener("input",updateSignature);
+  document.getElementById("resetSignatureBtn").addEventListener("click",()=>{
+    fontSelect.value="pen";weightRange.value="100";updateSignature();
+  });
   els.tabs.forEach(tab=>tab.addEventListener("click",()=>setMode(tab.dataset.mode)));
   els.kindButtons.forEach(btn=>btn.addEventListener("click",()=>setTextKind(btn.dataset.kind)));
   els.sealStyleSelect.addEventListener("change",()=>{state.sealStyle=els.sealStyleSelect.value;if(state.textKind==="seal")renderTextOptions();});

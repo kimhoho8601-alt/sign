@@ -435,3 +435,5 @@ button{cursor:pointer}
 @media(max-width:860px){
   .result-grid.one-option{grid-template-columns:minmax(0,1fr)}
 }
+
+.signature-weight .weight-scale{display:flex;justify-content:space-between}.signature-reset{margin:12px 0 14px;font-size:11px;min-height:34px}.signature-controls[hidden]{display:none}

@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gaegu:wght@400;700&family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Manrope:wght@600;700;800&family=Nanum+Myeongjo:wght@400;700;800&family=Nanum+Pen+Script&family=Noto+Serif+KR:wght@500;700;900&family=Single+Day&family=Song+Myung&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260922-4" />
+  <link rel="stylesheet" href="styles.css?v=20261007-1" />
 </head>
 <body>
   <header class="topbar">
@@ -85,6 +85,11 @@
           </div>
 
           <div id="signatureControls" class="signature-controls">
+            <label class="field"><span>사인 글씨체</span><select id="signatureFontSelect" class="select-input">
+              <option value="pen">자연스러운 손글씨</option><option value="gaegu">둥근 손글씨</option><option value="single">또박또박 손글씨</option><option value="batang">단정한 명조</option><option value="song">힘 있는 붓글씨</option><option value="myeongjo">섬세한 명조</option>
+            </select></label>
+            <label class="range-field signature-weight"><span><b>글씨선 굵기</b><output id="signatureWeightOutput">기본 · 100%</output></span><input id="signatureWeightRange" type="range" min="50" max="180" step="5" value="100" aria-label="글씨선 굵기"><div class="weight-scale"><small>얇게</small><small>굵게</small></div></label>
+            <button type="button" class="button soft signature-reset" id="resetSignatureBtn">글씨체·굵기 기본값</button>
             <div class="signature-note">
               <span>✦</span>
               <p><strong>조금 더 날리고, 획은 더 길게.</strong><small>글자를 겹치고 기울인 뒤 꼬리획과 언더라인을 더해 실제 서명에 가까운 3가지 스타일을 만듭니다.</small></p>
@@ -231,6 +236,6 @@
   </main>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="app.js?v=20260923-2"></script>
+  <script src="app.js?v=20261007-1"></script>
 </body>
 </html>
